@@ -1,0 +1,41 @@
+[project]
+name = "kubestellar"
+version = "0.1.0"
+description = "KubeStellar Agent and MCP Server with shared functions"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=0.1.0",
+    "pyyaml>=6.0.1",
+    "click>=8.1.7",
+    "asyncio>=3.4.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.21.1",
+    "black>=23.11.0",
+    "ruff>=0.1.6",
+    "mypy>=1.7.0",
+]
+
+[project.scripts]
+kubestellar = "src.a2a.cli:main"
+kubestellar-mcp = "src.mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
