@@ -8,5 +8,5 @@ def initialize_functions():
     """Initialize and register all available functions."""
     # Register kubeconfig function
     function_registry.register(KubeconfigFunction())
-    
+
     # Add more function registrations here as they are created
