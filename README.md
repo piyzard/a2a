@@ -1,6 +1,6 @@
-# KubeStellar
+# KubeStellar A2A Agent
 
-A powerful, unified implementation of both MCP (Model Context Protocol) server and KubeStellar Agent CLI tool with shared functions for Kubernetes multi-cluster management and orchestration.
+A powerful, unified implementation of both MCP (Model Context Protocol) server and KubeStellar Agent CLI tool with shared functions for Kubernetes multi-cluster management and orchestration. Now featuring comprehensive multi-namespace support and GVRC (Group, Version, Resource, Category) discovery capabilities.
 
 ## Table of Contents
 
@@ -31,6 +31,8 @@ The tool provides a shared function architecture, ensuring consistency between b
 
 - 🔄 **Dual Interface**: Use the same functions via CLI or through AI assistants
 - 🌐 **Multi-Cluster Support**: Manage multiple Kubernetes clusters from a single interface
+- 🏷️ **Multi-Namespace Operations**: Full support for all-namespaces, namespace selectors, and targeted deployments
+- 🔍 **GVRC Discovery**: Complete resource discovery including Groups, Versions, Resources, and Categories
 - 🔧 **Extensible Architecture**: Easy to add new functions and capabilities
 - 🔒 **Type-Safe**: Full type hints and schema validation for reliability
 - 🚀 **Async Support**: Built with modern async/await patterns for performance
@@ -126,6 +128,12 @@ uv run kubestellar execute get_kubeconfig --param detail_level=full
 
 # 4. Get help for a specific function
 uv run kubestellar describe get_kubeconfig
+
+# 5. Discover resources across all clusters
+uv run kubestellar execute gvrc_discovery
+
+# 6. List all namespaces across clusters
+uv run kubestellar execute namespace_utils -P all_namespaces=true
 ```
 
 ### MCP Server Quick Start
@@ -138,7 +146,7 @@ uv run kubestellar describe get_kubeconfig
     "kubestellar": {
       "command": "uv",
       "args": ["run", "kubestellar-mcp"],
-      "cwd": "/path/to/kubestellar"
+      "cwd": "/path/to/a2a"
     }
   }
 }
@@ -156,7 +164,7 @@ The CLI provides several commands for interacting with functions:
 #### List Functions
 
 ```bash
-kubestellar list-functions
+uv run kubestellar list-functions
 ```
 
 Output:
@@ -186,8 +194,8 @@ uv run kubestellar execute get_kubeconfig --param context=production --param det
 # With JSON parameters
 uv run kubestellar execute get_kubeconfig --params '{"context": "production", "detail_level": "full"}'
 
-# Mixed parameters
-uv run kubestellar execute get_kubeconfig --param context=staging --params '{"detail_level": "contexts"}'
+# With -P parameters (shorter syntax)
+uv run kubestellar execute get_kubeconfig -P context=staging -P detail_level=contexts
 ```
 
 #### Describe Functions
@@ -262,44 +270,165 @@ Claude: "Let me get the details for your production context."
 
 ## Available Functions
 
-### get_kubeconfig
+The KubeStellar Agent provides comprehensive multi-cluster management functions with advanced namespace and resource discovery capabilities.
+
+### Core Functions
+
+#### get_kubeconfig
 
 Retrieves and analyzes kubeconfig file information.
 
 **Parameters:**
 - `kubeconfig_path` (string, optional): Path to kubeconfig file
-  - Default: `~/.kube/config` or `$KUBECONFIG` environment variable
 - `context` (string, optional): Specific context to analyze
-- `detail_level` (string, optional): Level of detail in response
-  - Options: `"summary"`, `"full"`, `"contexts"`
-  - Default: `"summary"`
+- `detail_level` (string, optional): Level of detail (`summary`, `full`, `contexts`)
 
 **Examples:**
-
 ```bash
-# Get summary of current kubeconfig
+# Get summary of current kubeconfig  
 uv run kubestellar execute get_kubeconfig
 
-# Get full details
-uv run kubestellar execute get_kubeconfig --param detail_level=full
+# Get full cluster details
+uv run kubestellar execute get_kubeconfig -P detail_level=full
 
 # Check specific context
-uv run kubestellar execute get_kubeconfig --param context=production
-
-# Use custom kubeconfig file
-uv run kubestellar execute get_kubeconfig --param kubeconfig_path=/path/to/config
+uv run kubestellar execute get_kubeconfig -P context=production
 ```
 
-**Response Format:**
-```json
-{
-  "kubeconfig_path": "/home/user/.kube/config",
-  "current_context": "production",
-  "contexts": ["development", "staging", "production"],
-  "total_contexts": 3,
-  "clusters": [...],
-  "users": [...]
-}
+### Multi-Cluster Management Functions
+
+#### multicluster_create
+
+Create Kubernetes resources across multiple clusters with namespace targeting.
+
+**Key Parameters:**
+- `resource_type` & `resource_name`: Resource to create
+- `all_namespaces`: Deploy across all namespaces
+- `target_namespaces`: Specific namespace list
+- `namespace_selector`: Label-based namespace targeting
+
+**Examples:**
+```bash
+# Create deployment across all namespaces
+uv run kubestellar execute multicluster_create \
+  -P resource_type=deployment \
+  -P resource_name=web-app \
+  -P image=nginx:1.21 \
+  -P all_namespaces=true \
+  -P dry_run=client
+
+# Create in specific namespaces
+uv run kubestellar execute multicluster_create \
+  -P resource_type=configmap \
+  -P resource_name=app-config \
+  -P target_namespaces='["prod","staging"]'
+```
+
+#### multicluster_logs
+
+Aggregate logs from containers across multiple clusters and namespaces.
+
+**Key Parameters:**
+- `all_namespaces`: Get logs from all namespaces
+- `target_namespaces`: Specific namespace list
+- `label_selector`: Pod label filtering
+- `follow`: Stream logs continuously
+
+**Examples:**
+```bash
+# Get logs from all namespaces
+uv run kubestellar execute multicluster_logs \
+  -P all_namespaces=true \
+  -P label_selector="app=nginx" \
+  -P tail=100
+
+# Get logs from specific namespaces
+uv run kubestellar execute multicluster_logs \
+  -P target_namespaces='["production"]' \
+  -P pod_name=web-server
+```
+
+#### deploy_to
+
+Deploy resources to specific clusters with advanced namespace targeting.
+
+**Key Parameters:**
+- `target_clusters`: Specific clusters to deploy to
+- `all_namespaces`: Deploy across all namespaces
+- `target_namespaces`: Specific namespace list
+- `dry_run`: Test deployment without execution
+
+**Examples:**
+```bash
+# Deploy to specific clusters and namespaces
+uv run kubestellar execute deploy_to \
+  -P target_clusters='["cluster1","cluster2"]' \
+  -P resource_type=deployment \
+  -P resource_name=api-server \
+  -P image=myapp:v1.0 \
+  -P target_namespaces='["frontend","backend"]' \
+  -P dry_run=true
+
+# List available clusters
+uv run kubestellar execute deploy_to -P list_clusters=true
+```
+
+### Resource Discovery Functions
+
+#### gvrc_discovery
+
+Discover available Kubernetes resources, their versions, and categories across clusters.
+
+**Key Parameters:**
+- `resource_filter`: Filter by resource name pattern
+- `all_namespaces`: Include namespace discovery
+- `api_resources`: Include built-in API resources
+- `custom_resources`: Include custom resources (CRDs)
+- `output_format`: Response format (`summary`, `detailed`, `json`)
+
+**Examples:**
+```bash
+# Discover all resources across clusters
+uv run kubestellar execute gvrc_discovery
+
+# Filter by resource pattern
+uv run kubestellar execute gvrc_discovery \
+  -P resource_filter=pod \
+  -P output_format=detailed
+
+# Discover only custom resources
+uv run kubestellar execute gvrc_discovery \
+  -P api_resources=false \
+  -P custom_resources=true
+```
+
+#### namespace_utils
+
+Manage namespaces and namespace-scoped resources across multiple clusters.
+
+**Key Parameters:**
+- `operation`: Operation to perform (`list`, `get`, `list-resources`)
+- `all_namespaces`: Include all namespaces
+- `namespace_selector`: Label-based namespace filtering
+- `include_resources`: Include resources within namespaces
+
+**Examples:**
+```bash
+# List all namespaces across clusters
+uv run kubestellar execute namespace_utils \
+  -P operation=list \
+  -P all_namespaces=true
+
+# Get details for specific namespaces
+uv run kubestellar execute namespace_utils \
+  -P operation=get \
+  -P namespace_names='["production","staging"]'
+
+# List resources in all namespaces
+uv run kubestellar execute namespace_utils \
+  -P operation=list-resources \
+  -P all_namespaces=true \
+  -P resource_types='["pods","services"]'
 ```
 
 ## Development
@@ -307,32 +436,41 @@ uv run kubestellar execute get_kubeconfig --param kubeconfig_path=/path/to/confi
 ### Project Structure
 
 ```
-kubestellar/
+a2a/
 ├── src/
-│   ├── shared/                    # Shared components
+│   ├── shared/                         # Shared components
 │   │   ├── __init__.py
-│   │   ├── base_functions.py      # Base classes and registry
-│   │   └── functions/             # Function implementations
-│   │       ├── __init__.py        # Function initialization
-│   │       └── kubeconfig.py      # Kubeconfig function
-│   ├── mcp/                       # MCP server implementation
+│   │   ├── base_functions.py           # Base classes and registry
+│   │   └── functions/                  # Function implementations
+│   │       ├── __init__.py             # Function registration
+│   │       ├── kubeconfig.py           # Kubeconfig analysis
+│   │       ├── multicluster_create.py  # Multi-cluster resource creation
+│   │       ├── multicluster_logs.py    # Multi-cluster log aggregation
+│   │       ├── deploy_to.py            # Selective cluster deployment
+│   │       ├── gvrc_discovery.py       # GVRC resource discovery
+│   │       └── namespace_utils.py      # Namespace management
+│   ├── mcp/                            # MCP server implementation
 │   │   ├── __init__.py
-│   │   └── server.py              # MCP server entry point
-│   └── a2a/                       # CLI implementation
+│   │   └── server.py                   # MCP server entry point
+│   └── a2a/                            # CLI implementation
 │       ├── __init__.py
-│       └── cli.py                 # CLI entry point
-├── tests/                         # Test suite
+│       └── cli.py                      # CLI entry point
+├── tests/                              # Test suite
 │   ├── __init__.py
-│   ├── test_kubeconfig.py
-│   └── test_base_functions.py
-├── docs/                          # Documentation
-│   └── adding_functions.md        # Function development guide
-├── examples/                      # Example usage
-│   └── example_function.py
-├── pyproject.toml                 # Project configuration
-├── README.md                      # This file
-├── LICENSE                        # License file
-└── .gitignore                     # Git ignore rules
+│   ├── test_base_functions.py          # Base function tests
+│   ├── test_cli.py                     # CLI tests
+│   ├── test_kubeconfig.py              # Kubeconfig tests
+│   ├── test_gvrc_discovery.py          # GVRC discovery tests
+│   └── test_namespace_utils.py         # Namespace utils tests
+├── docs/                               # Documentation
+│   ├── adding_functions.md             # Function development guide
+│   ├── ci_implementation.md            # CI/CD documentation
+│   └── multi_namespace_gvrc_support.md # Multi-namespace & GVRC guide
+├── pyproject.toml                      # Project configuration
+├── README.md                           # This file
+├── LICENSE                             # License file
+├── OWNERS                              # Project ownership
+└── uv.lock                             # Dependency lock file
 ```
 
 ### Adding New Functions
