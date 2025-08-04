@@ -4,7 +4,6 @@ import json
 import pytest
 from click.testing import CliRunner
 from src.a2a.cli import cli
-from src.shared.functions import initialize_functions
 
 
 @pytest.fixture
