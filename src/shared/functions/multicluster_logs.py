@@ -1,8 +1,7 @@
 """Multi-cluster logs function for KubeStellar."""
 
 import asyncio
-import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from ..base_functions import BaseFunction
 
@@ -393,7 +392,7 @@ class MultiClusterLogsFunction(BaseFunction):
             
             return clusters
             
-        except Exception as e:
+        except Exception:
             return []
     
     def _is_wds_cluster(self, cluster_name: str) -> bool:

@@ -1,7 +1,6 @@
 """Deploy-to function for selective cluster deployment in KubeStellar."""
 
 import asyncio
-import json
 from typing import Any, Dict, List, Optional
 
 from ..base_functions import BaseFunction
@@ -369,7 +368,7 @@ class DeployToFunction(BaseFunction):
             
             return clusters
             
-        except Exception as e:
+        except Exception:
             return []
     
     def _is_wds_cluster(self, cluster_name: str) -> bool:
@@ -466,13 +465,19 @@ class DeployToFunction(BaseFunction):
             "anyOf": [
                 {"required": ["list_clusters"], "properties": {"list_clusters": {"const": True}}},
                 {
-                    "anyOf": [
-                        {"required": ["target_clusters"]},
-                        {"required": ["cluster_labels"]}
-                    ],
-                    "anyOf": [
-                        {"required": ["filename"]},
-                        {"required": ["resource_type", "resource_name"]}
+                    "allOf": [
+                        {
+                            "anyOf": [
+                                {"required": ["target_clusters"]},
+                                {"required": ["cluster_labels"]}
+                            ]
+                        },
+                        {
+                            "anyOf": [
+                                {"required": ["filename"]},
+                                {"required": ["resource_type", "resource_name"]}
+                            ]
+                        }
                     ]
                 }
             ]

@@ -1,10 +1,6 @@
 """Multi-cluster create function for KubeStellar."""
 
 import asyncio
-import json
-import subprocess
-import tempfile
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..base_functions import BaseFunction
@@ -149,7 +145,7 @@ class MultiClusterCreateFunction(BaseFunction):
             
             return clusters
             
-        except Exception as e:
+        except Exception:
             return []
     
     def _is_wds_cluster(self, cluster_name: str) -> bool:
