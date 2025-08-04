@@ -14,9 +14,13 @@ dependencies = [
 dev = [
     "pytest>=7.4.3",
     "pytest-asyncio>=0.21.1",
+    "pytest-cov>=4.1.0",
     "black>=23.11.0",
     "ruff>=0.1.6",
     "mypy>=1.7.0",
+    "bandit[toml]>=1.7.5",
+    "safety>=2.3.0",
+    "isort>=5.12.0",
 ]
 
 [project.scripts]
@@ -41,3 +45,46 @@ target-version = ["py311"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
+asyncio_mode = "auto"
+markers = [
+    "asyncio: mark test as async"
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101"]
+
+[dependency-groups]
+dev = [
+    "bandit>=1.8.6",
+    "black>=25.1.0",
+    "isort>=6.0.1",
+    "mypy>=1.17.1",
+    "pytest-asyncio>=1.1.0",
+    "pytest-cov>=6.2.1",
+    "ruff>=0.12.7",
+    "safety>=3.6.0",
+    "types-pyyaml>=6.0.12.20250516",
+]

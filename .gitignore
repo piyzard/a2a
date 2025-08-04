@@ -16,6 +16,12 @@ build/
 .mypy_cache/
 .ruff_cache/
 
+# Coverage
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
 # IDEs
 .vscode/
 .idea/

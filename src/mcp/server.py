@@ -5,10 +5,10 @@ import json
 import logging
 from typing import Any, Dict
 
-from mcp.server import Server, NotificationOptions
-from mcp.server.models import InitializationOptions
 import mcp.server.stdio
 import mcp.types as types
+from mcp.server import NotificationOptions, Server
+from mcp.server.models import InitializationOptions
 
 from ..shared.base_functions import function_registry
 from ..shared.functions import initialize_functions
@@ -25,7 +25,7 @@ async def handle_call_tool(
     function = function_registry.get(name)
     if not function:
         raise ValueError(f"Unknown function: {name}")
-    
+
     try:
         result = await function.execute(**(arguments or {}))
         return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
@@ -39,11 +39,11 @@ async def handle_list_tools() -> list[types.Tool]:
     tools = []
     for function in function_registry.list_all():
         schema = function.get_schema()
-        tools.append(types.Tool(
-            name=function.name,
-            description=function.description,
-            inputSchema=schema
-        ))
+        tools.append(
+            types.Tool(
+                name=function.name, description=function.description, inputSchema=schema
+            )
+        )
     return tools
 
 
@@ -51,13 +51,13 @@ async def run_server():
     """Run the MCP server."""
     # Initialize functions
     initialize_functions()
-    
+
     server = Server("kubestellar-mcp-server")
-    
+
     # Register handlers
     server.set_request_handler(types.ListToolsRequest, handle_list_tools)
     server.set_request_handler(types.CallToolRequest, handle_call_tool)
-    
+
     # Run the server
     async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
         await server.run(

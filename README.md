@@ -395,21 +395,93 @@ uv run pytest -v
 - Base function tests: 8 tests passing  
 - Kubeconfig function tests: 8 tests passing
 
-### Code Quality
+### Code Quality & Linting
+
+This project uses several tools to maintain code quality and consistency. All checks are automatically run in CI, but you can run them locally during development.
+
+#### Individual Tools
 
 ```bash
-# Format code
+# Format code with Black
 uv run black src/ tests/
 
-# Lint code
-uv run ruff src/ tests/
+# Check formatting (without changing files)
+uv run black --check src/ tests/
 
-# Type check
+# Lint code with Ruff (fast Python linter)
+uv run ruff check src/ tests/
+
+# Auto-fix linting issues
+uv run ruff check src/ tests/ --fix
+
+# Sort imports with isort
+uv run isort src/ tests/
+
+# Check import sorting (without changing files)  
+uv run isort --check-only src/ tests/
+
+# Type check with mypy
 uv run mypy src/
 
-# Run all checks
-uv run black src/ tests/ && uv run ruff src/ tests/ && uv run mypy src/
+# Security scan with bandit
+uv run bandit -r src/
+
+# Check for dependency vulnerabilities
+uv run safety check
 ```
+
+#### Combined Quality Checks
+
+```bash
+# Run all formatting and linting checks
+uv run black --check src/ tests/ && \
+uv run isort --check-only src/ tests/ && \
+uv run ruff check src/ tests/ && \
+uv run mypy src/
+
+# Fix all auto-fixable issues
+uv run black src/ tests/ && \
+uv run isort src/ tests/ && \
+uv run ruff check src/ tests/ --fix
+
+# Run complete quality check (like CI)
+uv run pytest tests/ -v && \
+uv run black --check src/ tests/ && \
+uv run isort --check-only src/ tests/ && \
+uv run ruff check src/ tests/ && \
+uv run mypy src/ --ignore-missing-imports && \
+uv run bandit -r src/ -ll
+```
+
+#### Pre-commit Workflow
+
+Before committing code, run:
+
+```bash
+# 1. Format and fix issues
+uv run black src/ tests/
+uv run isort src/ tests/  
+uv run ruff check src/ tests/ --fix
+
+# 2. Run tests
+uv run pytest tests/ -v
+
+# 3. Verify all checks pass
+uv run black --check src/ tests/
+uv run isort --check-only src/ tests/
+uv run ruff check src/ tests/
+```
+
+#### Tool Configuration
+
+All tools are configured in `pyproject.toml`:
+
+- **Black**: Line length 88, Python 3.11+ target
+- **Ruff**: Fast linting with comprehensive rule set
+- **isort**: Black-compatible import sorting
+- **mypy**: Strict type checking enabled
+- **bandit**: Security linting for Python code
+- **coverage**: Test coverage reporting
 
 ### Development Workflow
 
