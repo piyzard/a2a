@@ -13,14 +13,14 @@ def initialize_functions():
     """Initialize and register all available functions."""
     # Register kubeconfig function
     function_registry.register(KubeconfigFunction())
-
+    
     # Register KubeStellar multi-cluster functions
     function_registry.register(MultiClusterCreateFunction())
     function_registry.register(MultiClusterLogsFunction())
     function_registry.register(DeployToFunction())
-
+    
     # Register GVRC and namespace utilities
     function_registry.register(GVRCDiscoveryFunction())
     function_registry.register(NamespaceUtilsFunction())
-
+    
     # Add more function registrations here as they are created
