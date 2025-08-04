@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/kubestellar/a2a/tree/main/docs
+    about: Read the project documentation
+  - name: 📝 README
+    url: https://github.com/kubestellar/a2a/blob/main/README.md
+    about: View the project README for basic information
