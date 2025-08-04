@@ -2,10 +2,11 @@
 
 import asyncio
 import json
-import click
 from typing import Any, Dict, Optional
 
-from ..shared.base_functions import function_registry, async_to_sync
+import click
+
+from ..shared.base_functions import async_to_sync, function_registry
 from ..shared.functions import initialize_functions
 
 
@@ -25,7 +26,7 @@ def list_functions():
     if not functions:
         click.echo("No functions registered.")
         return
-    
+
     click.echo("Available functions:")
     for func in functions:
         click.echo(f"\n- {func.name}")
@@ -42,9 +43,9 @@ def list_functions():
 
 
 @cli.command()
-@click.argument('function_name')
-@click.option('--params', '-p', help='JSON string of parameters')
-@click.option('--param', '-P', multiple=True, help='Key=value parameter pairs')
+@click.argument("function_name")
+@click.option("--params", "-p", help="JSON string of parameters")
+@click.option("--param", "-P", multiple=True, help="Key=value parameter pairs")
 def execute(function_name: str, params: Optional[str], param: tuple):
     """Execute a specific function."""
     function = function_registry.get(function_name)
@@ -52,29 +53,31 @@ def execute(function_name: str, params: Optional[str], param: tuple):
         click.echo(f"Error: Function '{function_name}' not found.", err=True)
         click.echo("Use 'list-functions' to see available functions.", err=True)
         return
-    
+
     # Parse parameters
     kwargs: Dict[str, Any] = {}
-    
+
     if params:
         try:
             kwargs = json.loads(params)
         except json.JSONDecodeError as e:
             click.echo(f"Error: Invalid JSON parameters: {e}", err=True)
             return
-    
+
     # Parse key=value pairs
     for p in param:
-        if '=' not in p:
-            click.echo(f"Error: Invalid parameter format '{p}'. Use key=value", err=True)
+        if "=" not in p:
+            click.echo(
+                f"Error: Invalid parameter format '{p}'. Use key=value", err=True
+            )
             return
-        key, value = p.split('=', 1)
+        key, value = p.split("=", 1)
         # Try to parse as JSON, fallback to string
         try:
             kwargs[key] = json.loads(value)
         except json.JSONDecodeError:
             kwargs[key] = value
-    
+
     # Execute function
     try:
         # Convert async function to sync for CLI
@@ -82,21 +85,21 @@ def execute(function_name: str, params: Optional[str], param: tuple):
             result = async_to_sync(function.execute)(**kwargs)
         else:
             result = function.execute(**kwargs)
-        
+
         click.echo(json.dumps(result, indent=2))
     except Exception as e:
         click.echo(f"Error executing function: {e}", err=True)
 
 
 @cli.command()
-@click.argument('function_name')
+@click.argument("function_name")
 def describe(function_name: str):
     """Get detailed information about a function."""
     function = function_registry.get(function_name)
     if not function:
         click.echo(f"Error: Function '{function_name}' not found.", err=True)
         return
-    
+
     click.echo(f"Function: {function.name}")
     click.echo(f"Description: {function.description}")
     click.echo("\nSchema:")
