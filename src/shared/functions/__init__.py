@@ -2,9 +2,11 @@
 
 from ..base_functions import function_registry
 from .deploy_to import DeployToFunction
+from .gvrc_discovery import GVRCDiscoveryFunction
 from .kubeconfig import KubeconfigFunction
 from .multicluster_create import MultiClusterCreateFunction
 from .multicluster_logs import MultiClusterLogsFunction
+from .namespace_utils import NamespaceUtilsFunction
 
 
 def initialize_functions():
@@ -16,5 +18,9 @@ def initialize_functions():
     function_registry.register(MultiClusterCreateFunction())
     function_registry.register(MultiClusterLogsFunction())
     function_registry.register(DeployToFunction())
+    
+    # Register GVRC and namespace utilities
+    function_registry.register(GVRCDiscoveryFunction())
+    function_registry.register(NamespaceUtilsFunction())
     
     # Add more function registrations here as they are created
