@@ -3,6 +3,7 @@
 from ..base_functions import function_registry
 from .deploy_to import DeployToFunction
 from .gvrc_discovery import GVRCDiscoveryFunction
+from .helm_deploy import HelmDeployFunction
 from .kubeconfig import KubeconfigFunction
 from .kubestellar_management import KubeStellarManagementFunction
 from .multicluster_create import MultiClusterCreateFunction
@@ -22,6 +23,9 @@ def initialize_functions():
     function_registry.register(MultiClusterCreateFunction())
     function_registry.register(MultiClusterLogsFunction())
     function_registry.register(DeployToFunction())
+
+    # Register Helm deployment function
+    function_registry.register(HelmDeployFunction())
 
     # Register GVRC and namespace utilities
     function_registry.register(GVRCDiscoveryFunction())
