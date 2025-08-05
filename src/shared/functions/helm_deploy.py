@@ -1221,7 +1221,6 @@ class HelmDeployFunction(BaseFunction):
         
     def _is_wec_cluster(self, cluster_name: str) -> bool:
         """Check if cluster is a WEC (Workload Execution Cluster)."""
-        lower_name = cluster_name.lower()
         # WEC clusters are typically named cluster1, cluster2, etc.
         # They are not WDS or ITS clusters
         return not (self._is_wds_cluster(cluster_name) or self._is_its_cluster(cluster_name))
