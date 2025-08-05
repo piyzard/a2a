@@ -1,4 +1,21 @@
-"""Helm chart deployment function with KubeStellar binding policy integration."""
+"""Helm chart deployment function with KubeStellar binding policy integration.
+
+Provides multi-cluster Helm deployments with automatic KubeStellar integration:
+- Multi-cluster deployment with cluster-specific configurations
+- Automatic resource labeling and BindingPolicy creation
+- Namespace management with KubeStellar metadata
+- All standard Helm operations (install, upgrade, uninstall, status, history)
+
+Key KubeStellar concepts:
+- WDS: Workload Description Space (where policies are created)
+- WEC: Workload Execution Clusters (where apps actually run)
+- BindingPolicy: Defines workload distribution rules
+
+Example: 
+    helm_deploy(chart_name="nginx", repository_url="...", 
+                target_clusters=["prod1", "prod2"],
+                cluster_set_values=["prod1=replicas=3", "prod2=replicas=5"])
+"""
 
 import asyncio
 import json
@@ -11,12 +28,20 @@ from ..base_functions import BaseFunction
 
 
 class HelmDeployFunction(BaseFunction):
-    """Function to deploy Helm charts with KubeStellar binding policy integration."""
+    """Multi-cluster Helm deployment with KubeStellar integration.
+    
+    Features:
+    - Parallel deployment across multiple clusters
+    - Automatic KubeStellar resource labeling and BindingPolicy creation
+    - Cluster-specific configurations (different values per cluster)
+    - Namespace management with KubeStellar metadata
+    - All Helm operations: install, upgrade, uninstall, status, history
+    """
 
     def __init__(self) -> None:
         super().__init__(
             name="helm_deploy",
-            description="Deploy Helm charts across clusters with KubeStellar binding policy integration. Supports chart repositories, local charts, cluster-specific values, and automatic resource labeling for BindingPolicy compatibility. Use this for complex application deployments that require Helm package management.",
+            description="Deploy Helm charts to multiple clusters with KubeStellar integration. Automatically creates BindingPolicies, labels resources, and supports cluster-specific configurations. Handles install/upgrade/uninstall/status/history operations across clusters.",
         )
 
     async def execute(
@@ -55,7 +80,10 @@ class HelmDeployFunction(BaseFunction):
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """
-        Deploy Helm charts with KubeStellar binding policy integration.
+        Deploy Helm charts across multiple clusters with KubeStellar integration.
+        
+        Process: discover clusters → prepare labels → execute Helm operation → create BindingPolicy
+        Supports cluster-specific configurations and automatic KubeStellar resource management.
 
         Args:
             chart_name: Name of the Helm chart
@@ -93,7 +121,7 @@ class HelmDeployFunction(BaseFunction):
             Dictionary with deployment results and binding policy information
         """
         try:
-            # Validate inputs
+            # Validate required parameters based on operation type
             validation_result = self._validate_inputs(
                 chart_name,
                 chart_path,
@@ -105,7 +133,7 @@ class HelmDeployFunction(BaseFunction):
             if validation_result:
                 return validation_result
 
-            # Set default release name if not provided
+            # Set defaults for optional parameters
             if not release_name:
                 release_name = (
                     chart_name.replace("/", "-") if chart_name else "helm-release"
@@ -115,12 +143,12 @@ class HelmDeployFunction(BaseFunction):
             if not binding_policy_name:
                 binding_policy_name = f"{release_name}-helm-policy"
 
-            # Discover available clusters
+            # Discover available clusters (excludes WDS management clusters)
             all_clusters = await self._discover_clusters(kubeconfig, remote_context)
             if not all_clusters:
                 return {"status": "error", "error": "No clusters discovered"}
 
-            # Filter clusters based on selection criteria
+            # Filter clusters by names or labels
             selected_clusters = self._filter_clusters(
                 all_clusters, target_clusters, cluster_labels
             )
@@ -135,7 +163,7 @@ class HelmDeployFunction(BaseFunction):
                     ],
                 }
 
-            # Resolve target namespaces
+            # Resolve target namespaces (explicit list, all namespaces, or default)
             target_ns_list = await self._resolve_target_namespaces(
                 selected_clusters[0],
                 all_namespaces,
@@ -145,12 +173,12 @@ class HelmDeployFunction(BaseFunction):
                 kubeconfig,
             )
 
-            # Prepare KubeStellar labels for Helm resources
+            # Prepare KubeStellar-compatible labels for resources and BindingPolicy
             helm_labels = self._prepare_kubestellar_labels(
                 release_name, chart_name, kubestellar_labels
             )
 
-            # Show deployment plan
+            # Create deployment plan summary
             deployment_plan = {
                 "operation": operation,
                 "release_name": release_name,
@@ -166,6 +194,7 @@ class HelmDeployFunction(BaseFunction):
                 "kubestellar_labels": helm_labels,
             }
 
+            # Return preview for dry-run mode
             if dry_run:
                 return {
                     "status": "success",
@@ -174,7 +203,7 @@ class HelmDeployFunction(BaseFunction):
                     "clusters_selected": len(selected_clusters),
                 }
 
-            # Execute Helm operation
+            # Execute Helm operation (install/upgrade/uninstall/status/history)
             if operation in ["install", "upgrade"]:
                 result = await self._deploy_helm_chart(
                     selected_clusters,
@@ -291,7 +320,7 @@ class HelmDeployFunction(BaseFunction):
         chart_name: str,
         additional_labels: Optional[Dict[str, str]],
     ) -> Dict[str, str]:
-        """Prepare labels for KubeStellar BindingPolicy compatibility."""
+        """Create standard K8s + KubeStellar labels for resources and BindingPolicy selection."""
         labels = {
             "app.kubernetes.io/managed-by": "Helm",
             "app.kubernetes.io/instance": release_name,
@@ -332,14 +361,14 @@ class HelmDeployFunction(BaseFunction):
         kubeconfig: str,
         helm_labels: Dict[str, str],
     ) -> Dict[str, Any]:
-        """Deploy Helm chart to selected clusters."""
+        """Execute Helm install/upgrade across multiple clusters with cluster-specific configs."""
         results = {}
 
-        # Parse cluster-specific configurations
+        # Parse per-cluster values and settings
         cluster_values_map = self._parse_cluster_values(cluster_values)
         cluster_set_values_map = self._parse_cluster_set_values(cluster_set_values)
 
-        # Deploy to each selected cluster
+        # Execute deployment on each cluster in parallel
         for cluster in clusters:
             cluster_result = await self._deploy_to_cluster(
                 cluster,
@@ -852,7 +881,7 @@ class HelmDeployFunction(BaseFunction):
         operation: str,
         kubeconfig: str,
     ) -> Dict[str, Any]:
-        """Get Helm release information from selected clusters."""
+        """Execute helm status/history commands across multiple clusters."""
         results = {}
 
         for cluster in clusters:
