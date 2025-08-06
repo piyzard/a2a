@@ -7,10 +7,6 @@ const config: Config = {
   tagline: 'Advanced Multi-Cluster Kubernetes Management with AI-Powered Automation',
   favicon: 'img/kubestellar-logo.png',
 
-  future: {
-    v4: true,
-  },
-
   url: 'https://kubestellar.github.io',
   baseUrl: '/a2a/',
 
@@ -87,6 +83,10 @@ const config: Config = {
             {
               label: 'Getting Started',
               to: '/docs/getting-started/',
+            },
+            {
+              label: 'CLI Reference',
+              to: '/docs/cli-reference',
             },
           ],
         },
