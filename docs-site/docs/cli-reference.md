@@ -143,18 +143,15 @@ uv run kubestellar execute namespace_utils \
 
 ### Agent Configuration
 
-Configure AI providers in `~/.kube/a2a-config.yaml`:
+Configure AI provider in `~/.kube/a2a-config.yaml`:
 
 ```yaml
+# OpenAI is currently the only supported provider
 providers:
   openai:
     api_key: "your-openai-key"
     model: "gpt-4o"
     temperature: 0.7
-  
-  claude:
-    api_key: "your-claude-key" 
-    model: "claude-3-haiku"
     
 default_provider: "openai"
 
@@ -166,6 +163,6 @@ ui:
 Or use environment variables:
 ```bash
 export OPENAI_API_KEY="your-key"
-export CLAUDE_API_KEY="your-key"
-export A2A_DEFAULT_PROVIDER="openai"
 ```
+
+**Note:** Additional AI providers (Claude, Gemini, etc.) will be added in future releases.

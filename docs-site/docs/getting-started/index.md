@@ -32,8 +32,7 @@ Before you begin, make sure you have:
 
 ### Optional (for AI features)
 - **Claude Desktop** - For MCP server integration
-- **OpenAI API Key** - For interactive agent mode
-- **Anthropic API Key** - For Claude-powered automation
+- **OpenAI API Key** - For interactive agent mode (currently only supported provider)
 
 ## Learning Path
 

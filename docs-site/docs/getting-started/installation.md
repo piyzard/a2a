@@ -244,10 +244,8 @@ Set up common environment variables for seamless operation:
 # Kubernetes configuration
 export KUBECONFIG="$HOME/.kube/config"
 
-# AI providers (optional)
+# AI provider - OpenAI (currently only supported provider)
 export OPENAI_API_KEY="your-openai-key"
-export CLAUDE_API_KEY="your-claude-key"
-export A2A_DEFAULT_PROVIDER="openai"
 
 # Logging level
 export LOG_LEVEL="INFO"
@@ -258,16 +256,12 @@ export LOG_LEVEL="INFO"
 Create a configuration file at `~/.kube/a2a-config.yaml`:
 
 ```yaml
-# AI Provider Configuration
+# AI Provider Configuration (OpenAI only currently supported)
 providers:
   openai:
     api_key: "${OPENAI_API_KEY}"
     model: "gpt-4o"
     temperature: 0.7
-  
-  claude:
-    api_key: "${CLAUDE_API_KEY}"
-    model: "claude-3-haiku"
     
 default_provider: "openai"
 
@@ -281,6 +275,8 @@ clusters:
   default_timeout: "5m"
   auto_discovery: true
 ```
+
+**Note:** Additional AI providers (Claude, Gemini, etc.) will be added in future releases.
 
 ## Troubleshooting Installation
 
