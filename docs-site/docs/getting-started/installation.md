@@ -85,20 +85,69 @@ uv run kubestellar list-functions
 uv run kubestellar execute get_kubeconfig
 ```
 
-Expected output:
-```
-Available functions:
+## CLI Commands Overview
 
+### Main Commands
+
+```bash
+# Show help
+uv run kubestellar --help
+
+# List all available functions
+uv run kubestellar list-functions
+
+# Execute a function with parameters
+uv run kubestellar execute <function_name> [parameters]
+
+# Get detailed function description and schema
+uv run kubestellar describe <function_name>
+
+# Start interactive agent mode
+uv run kubestellar agent
+```
+
+### Function Execution Examples
+
+```bash
+# Using --param flag
+uv run kubestellar execute get_kubeconfig --param context=production --param detail_level=full
+
+# Using -P shorthand (recommended)
+uv run kubestellar execute get_kubeconfig -P context=staging -P detail_level=contexts
+
+# Using JSON parameters
+uv run kubestellar execute get_kubeconfig --params '{"context": "production", "detail_level": "full"}'
+
+# Complex array parameters
+uv run kubestellar execute namespace_utils -P target_namespaces='["prod","staging"]' -P all_namespaces=true
+```
+
+### Available Functions
+
+```
 - kubestellar_management
-  Description: Advanced KubeStellar multi-cluster resource management
+  Description: Advanced KubeStellar multi-cluster resource management with deep search capabilities
   
-- get_kubeconfig  
+- get_kubeconfig
   Description: Get details from kubeconfig file including contexts, clusters, and users
   
 - helm_deploy
   Description: Deploy Helm charts across clusters with KubeStellar binding policy integration
   
-[... additional functions ...]
+- namespace_utils  
+  Description: List and count pods, services, deployments and other resources across namespaces
+  
+- gvrc_discovery
+  Description: Discover and inventory all available Kubernetes API resources across clusters
+  
+- multicluster_create
+  Description: Create Kubernetes resources across multiple clusters
+  
+- multicluster_logs
+  Description: Aggregate and stream logs from multiple clusters
+  
+- deploy_to
+  Description: Deploy resources to specific clusters with advanced targeting
 ```
 
 ## Optional Components
@@ -114,6 +163,44 @@ export OPENAI_API_KEY="your-openai-api-key"
 
 # Test agent mode
 uv run kubestellar agent
+```
+
+##### Agent Mode Interface
+
+```
+╭─────────────────────────────────────────────────────────────────────────────────────────────╮
+│  ██╗  ██╗██╗   ██╗██████╗ ███████╗███████╗████████╗███████╗██╗     ██╗      █████╗ ██████╗  │
+│  ██║ ██╔╝██║   ██║██╔══██╗██╔════╝██╔════╝╚══██╔══╝██╔════╝██║     ██║     ██╔══██╗██╔══██╗ │
+│  █████╔╝ ██║   ██║██████╔╝█████╗  ███████╗   ██║   █████╗  ██║     ██║     ███████║██████╔╝ │
+│  ██╔═██╗ ██║   ██║██╔══██╗██╔══╝  ╚════██║   ██║   ██╔══╝  ██║     ██║     ██╔══██║██╔══██╗ │
+│  ██║  ██╗╚██████╔╝██████╔╝███████╗███████║   ██║   ███████╗███████╗███████╗██║  ██║██║  ██║ │
+│  ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝╚══════╝   ╚═╝   ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ │
+│                       Multi-Cluster Kubernetes Management Agent                             │
+╰─────────────────────────────────────────────────────────────────────────────────────────────╯
+
+Provider: openai
+Model: gpt-4o
+
+Type 'help' for available commands
+Type 'exit' or Ctrl+D to quit
+
+[openai] ▶ 
+```
+
+##### Agent Commands
+
+```bash
+# Natural language queries
+[openai] ▶ how many pods are running?
+[openai] ▶ show me kubestellar topology
+[openai] ▶ deploy nginx using helm to production clusters
+[openai] ▶ check binding policy status
+
+# Built-in commands
+help          # Show available commands
+clear         # Clear conversation history
+provider <name>  # Switch AI provider
+exit          # Exit the agent
 ```
 
 #### Claude MCP Integration

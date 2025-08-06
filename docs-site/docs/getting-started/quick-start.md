@@ -47,17 +47,44 @@ uv run kubestellar --help
 uv run kubestellar list-functions
 ```
 
-You should see output similar to:
+You should see all CLI commands:
+```
+Usage: kubestellar [OPTIONS] COMMAND [ARGS]...
+
+Commands:
+  list-functions  List all available functions
+  execute        Execute a specific function
+  describe       Show detailed information about a function
+  agent          Start interactive AI agent
+```
+
+And available functions:
 ```
 Available functions:
 
 - kubestellar_management
+  Description: Advanced KubeStellar multi-cluster resource management
+  
 - get_kubeconfig
+  Description: Get details from kubeconfig file
+  
 - helm_deploy
-- multicluster_create
+  Description: Deploy Helm charts across clusters
+  
+- namespace_utils  
+  Description: List and count resources across namespaces
+  
 - gvrc_discovery
-- namespace_utils
-[... and more]
+  Description: Discover API resources across clusters
+  
+- multicluster_create
+  Description: Create resources across multiple clusters
+  
+- multicluster_logs
+  Description: Aggregate logs from multiple clusters
+  
+- deploy_to
+  Description: Deploy resources to specific clusters
 ```
 
 ## Step 3: Basic Cluster Information
@@ -154,11 +181,44 @@ export OPENAI_API_KEY="your-api-key-here"
 uv run kubestellar agent
 ```
 
+You'll see the KubeStellar ASCII art:
+```
+╭─────────────────────────────────────────────────────────────────────────────────────────────╮
+│  ██╗  ██╗██╗   ██╗██████╗ ███████╗███████╗████████╗███████╗██╗     ██╗      █████╗ ██████╗  │
+│  ██║ ██╔╝██║   ██║██╔══██╗██╔════╝██╔════╝╚══██╔══╝██╔════╝██║     ██║     ██╔══██╗██╔══██╗ │
+│  █████╔╝ ██║   ██║██████╔╝█████╗  ███████╗   ██║   █████╗  ██║     ██║     ███████║██████╔╝ │
+│  ██╔═██╗ ██║   ██║██╔══██╗██╔══╝  ╚════██║   ██║   ██╔══╝  ██║     ██║     ██╔══██║██╔══██╗ │
+│  ██║  ██╗╚██████╔╝██████╔╝███████╗███████║   ██║   ███████╗███████╗███████╗██║  ██║██║  ██║ │
+│  ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝╚══════╝   ╚═╝   ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ │
+│                       Multi-Cluster Kubernetes Management Agent                             │
+╰─────────────────────────────────────────────────────────────────────────────────────────────╯
+
+Provider: openai
+Model: gpt-4o
+
+Type 'help' for available commands
+Type 'exit' or Ctrl+D to quit
+
+[openai] ▶ 
+```
+
 In the agent, try natural language commands:
 ```
+# Resource queries
 [openai] ▶ show me all my clusters
 [openai] ▶ how many pods are running?
 [openai] ▶ list all namespaces
+[openai] ▶ perform deep kubestellar search
+
+# Deployment commands
+[openai] ▶ deploy nginx using helm to production
+[openai] ▶ create a configmap named test-config
+[openai] ▶ show me binding policies
+
+# Troubleshooting
+[openai] ▶ check cluster connectivity
+[openai] ▶ find failed deployments
+[openai] ▶ get logs from nginx pods
 ```
 
 ## What You Just Did
@@ -196,6 +256,11 @@ uv run kubestellar execute helm_deploy \
   -P repository_url=https://stefanprodan.github.io/podinfo \
   -P namespace=default \
   -P create_binding_policy=true
+  
+# Check deployment status
+uv run kubestellar execute helm_deploy \
+  -P operation=status \
+  -P release_name=podinfo
 ```
 
 ### Monitor Your Clusters
@@ -209,6 +274,11 @@ uv run kubestellar execute multicluster_logs \
 uv run kubestellar execute namespace_utils \
   -P operation=list-resources \
   -P all_namespaces=true
+  
+# Stream logs in real-time
+uv run kubestellar execute multicluster_logs \
+  -P label_selector="app=nginx" \
+  -P follow=true
 ```
 
 ### Set Up Automation
@@ -217,13 +287,50 @@ uv run kubestellar execute namespace_utils \
 cat > daily-check.sh << 'EOF'
 #!/bin/bash
 echo "=== Daily Kubernetes Cluster Health Check ==="
+echo "1. Checking cluster connectivity..."
+uv run kubestellar execute get_kubeconfig -P detail_level=full
+
+echo "\n2. KubeStellar topology..."
 uv run kubestellar execute kubestellar_management -P operation=topology_map
+
+echo "\n3. Resource inventory..."
+uv run kubestellar execute gvrc_discovery
+
+echo "\n4. Namespace status..."
 uv run kubestellar execute namespace_utils -P operation=list -P all_namespaces=true
+
+echo "\n5. Binding policy analysis..."
+uv run kubestellar execute kubestellar_management -P operation=policy_analysis
+
 echo "=== Health check complete ==="
 EOF
 
 chmod +x daily-check.sh
 ./daily-check.sh
+```
+
+### CLI Parameter Examples
+
+```bash
+# Different ways to pass parameters
+
+# Method 1: Using -P (recommended)
+uv run kubestellar execute get_kubeconfig -P context=production -P detail_level=full
+
+# Method 2: Using --param
+uv run kubestellar execute get_kubeconfig --param context=production --param detail_level=full
+
+# Method 3: Using JSON
+uv run kubestellar execute get_kubeconfig --params '{"context": "production", "detail_level": "full"}'
+
+# Complex parameters with arrays
+uv run kubestellar execute helm_deploy \
+  -P target_clusters='["cluster1", "cluster2"]' \
+  -P set_values='["replicaCount=3", "service.type=LoadBalancer"]'
+
+# Describing function parameters
+uv run kubestellar describe helm_deploy
+uv run kubestellar describe kubestellar_management
 ```
 
 ## Troubleshooting

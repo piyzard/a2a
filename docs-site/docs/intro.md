@@ -117,9 +117,74 @@ graph TB
 
 ## Getting Started
 
-Ready to transform your Kubernetes multi-cluster management experience? 
+Ready to transform your Kubernetes multi-cluster management experience?
 
-👉 **[Start with Installation →](./getting-started/)**
+### Quick Install
+
+```bash
+# Install with uv
+uv pip install -e ".[dev]"
+
+# Verify installation
+uv run kubestellar --help
+```
+
+### Essential CLI Commands
+
+```bash
+# List all available functions
+uv run kubestellar list-functions
+
+# Execute a function
+uv run kubestellar execute <function_name>
+
+# Start interactive AI agent
+uv run kubestellar agent
+
+# Get function details
+uv run kubestellar describe <function_name>
+```
+
+### Quick Examples
+
+```bash
+# Get cluster information
+uv run kubestellar execute get_kubeconfig
+
+# Deploy Helm chart
+uv run kubestellar execute helm_deploy \
+  -P chart_name=nginx \
+  -P repository_url=https://charts.bitnami.com/bitnami \
+  -P target_clusters='["prod-cluster"]'
+
+# Discover resources
+uv run kubestellar execute gvrc_discovery
+
+# List all namespaces
+uv run kubestellar execute namespace_utils -P all_namespaces=true
+```
+
+### MCP Server Setup
+
+Add to Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "kubestellar": {
+      "command": "uv",
+      "args": ["run", "kubestellar-mcp"],
+      "cwd": "/path/to/a2a"
+    }
+  }
+}
+```
+
+### Documentation
+
+👉 **[Installation Guide →](./getting-started/installation)**
+
+👉 **[CLI Reference →](./cli-reference)**
 
 👉 **[Quick Start Guide →](./getting-started/quick-start)**
 

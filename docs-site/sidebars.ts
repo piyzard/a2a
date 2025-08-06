@@ -19,6 +19,11 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'doc',
+      id: 'cli-reference',
+      label: 'CLI Reference',
+    },
+    {
+      type: 'doc',
       id: 'troubleshooting',
       label: 'Troubleshooting',
     },
