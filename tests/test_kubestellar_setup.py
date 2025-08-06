@@ -1,8 +1,6 @@
 """Tests for KubeStellar setup functionality."""
 
-import asyncio
-import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -138,12 +136,6 @@ class TestKubeStellarSetupFunction:
             "stdout": "Creating cluster 'kubeflex'...",
             "stderr": "",
         }
-        
-        mock_ready_response = {
-            "returncode": 0,
-            "stdout": "Kubernetes control plane is running...",
-            "stderr": "",
-        }
 
         with patch.object(setup_function, "_run_command") as mock_run:
             with patch.object(setup_function, "_wait_for_cluster_ready", return_value=True):
@@ -249,7 +241,7 @@ class TestKubeStellarSetupFunction:
 
         with patch.object(setup_function, "_run_command") as mock_run:
             def side_effect(cmd, timeout=None):
-                if cmd == ["curl", "-s", f"https://raw.githubusercontent.com/kubestellar/kubestellar/refs/tags/v0.28.0/scripts/create-kubestellar-demo-env.sh"]:
+                if cmd == ["curl", "-s", "https://raw.githubusercontent.com/kubestellar/kubestellar/refs/tags/v0.28.0/scripts/create-kubestellar-demo-env.sh"]:
                     return mock_download_response
                 elif len(cmd) >= 2 and cmd[0] == "bash" and "-c" in cmd[1]:
                     return mock_script_response

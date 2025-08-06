@@ -15,9 +15,8 @@ This module provides:
 import asyncio
 import json
 import shutil
-import subprocess
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from ..base_functions import BaseFunction
 
@@ -80,7 +79,7 @@ class KubeStellarSetupFunction(BaseFunction):
         helm_timeout: str = "10m",
         wait_for_ready: bool = True,
         create_wec_clusters: bool = True,
-        wec_cluster_names: List[str] = None,
+        wec_cluster_names: Optional[List[str]] = None,
         output_format: str = "detailed",
         **kwargs: Any,
     ) -> Dict[str, Any]:
@@ -108,19 +107,6 @@ class KubeStellarSetupFunction(BaseFunction):
             # Use provided version or default
             version = kubestellar_version or self.kubestellar_version
             wec_names = wec_cluster_names or ["cluster1", "cluster2"]
-            
-            setup_result = {
-                "status": "success",
-                "operation": operation,
-                "kubestellar_version": version,
-                "platform": platform,
-                "cluster_name": cluster_name,
-                "setup_steps": [],
-                "prerequisites": {},
-                "clusters_created": [],
-                "errors": [],
-                "warnings": [],
-            }
 
             if operation == "verify_prerequisites":
                 return await self._verify_prerequisites(output_format)
@@ -640,7 +626,7 @@ class KubeStellarSetupFunction(BaseFunction):
 
             # Update helm repo
             helm_update = ["helm", "repo", "update"]
-            update_result = await self._run_command(helm_update)
+            await self._run_command(helm_update)
             
             # Install core chart
             helm_install = [
@@ -736,18 +722,10 @@ class KubeStellarSetupFunction(BaseFunction):
             if not its_context:
                 return {"status": "error", "error": "Could not find ITS context"}
 
-            # Join cluster to hub
-            wec_context = f"kind-{cluster_name}"
-            join_cmd = [
-                "clusteradm", "join",
-                "--hub-token", "dummy-token",  # This will be replaced by actual token
-                "--hub-apiserver", "https://localhost:6443",  # This will be replaced by actual server
-                "--cluster-name", cluster_name,
-                "--context", wec_context
-            ]
-
             # For the demo, we'll use a simplified registration approach
             # In practice, this involves getting tokens and approving CSRs
+            # Join cluster to hub would use:
+            # clusteradm join --hub-token <token> --hub-apiserver <server> --cluster-name <name>
             
             # Switch to ITS context for hub operations
             switch_result = await self._run_command(["kubectl", "config", "use-context", its_context])
