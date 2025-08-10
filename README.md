@@ -49,8 +49,7 @@ Add to Claude Desktop config (`~/Library/Application Support/Claude/claude_deskt
 
 ```bash
 # Run all tests
-uv run pytest
-
+ear
 # Run with coverage
 uv run pytest --cov=src
 

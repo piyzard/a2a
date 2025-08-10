@@ -124,6 +124,9 @@ class KubeStellarSetupFunction(BaseFunction):
                     platform, wec_names, wait_for_ready, output_format
                 )
                 
+            elif operation == "show_install_instructions":
+                return await self._show_install_instructions(platform, version, output_format)
+                
             elif operation == "full_setup":
                 if automated_script:
                     return await self._automated_setup(platform, version, output_format)
@@ -740,6 +743,79 @@ class KubeStellarSetupFunction(BaseFunction):
         except Exception as e:
             return {"status": "error", "error": f"WEC registration failed: {str(e)}"}
 
+    async def _show_install_instructions(self, platform: str, version: str, output_format: str) -> Dict[str, Any]:
+        """Show instructions for installing KubeStellar using the automated script."""
+        try:
+            script_url = f"https://raw.githubusercontent.com/kubestellar/kubestellar/refs/tags/{version}/scripts/create-kubestellar-demo-env.sh"
+            
+            instructions = {
+                "status": "success",
+                "operation": "show_install_instructions",
+                "kubestellar_version": version,
+                "platform": platform,
+                "script_url": script_url,
+                "instructions": {
+                    "method_1_one_liner": {
+                        "description": "Install KubeStellar with a one-liner command",
+                        "command": f"curl -s {script_url} | bash -s -- --platform {platform}",
+                        "note": "This downloads and runs the script in one command"
+                    },
+                    "method_2_download_first": {
+                        "description": "Download script first, then run it",
+                        "commands": [
+                            f"curl -O {script_url}",
+                            "chmod +x create-kubestellar-demo-env.sh",
+                            f"./create-kubestellar-demo-env.sh --platform {platform}"
+                        ],
+                        "note": "This method allows you to inspect the script before running"
+                    },
+                    "method_3_with_debugging": {
+                        "description": "Run with debugging enabled",
+                        "command": f"curl -s {script_url} | bash -s -- --platform {platform} -X",
+                        "note": "The -X flag enables verbose output for troubleshooting"
+                    }
+                },
+                "script_options": {
+                    "--platform": f"Kubernetes platform to use ({platform}). Options: kind, k3d",
+                    "-X": "Enable debug mode with verbose output",
+                    "-h, --help": "Show help message"
+                },
+                "what_it_does": [
+                    "Verifies all prerequisites are installed",
+                    "Cleans up any existing KubeStellar-related clusters",
+                    f"Creates a {platform} cluster named 'kubeflex'",
+                    "Installs KubeFlex and KubeStellar core components",
+                    "Creates two workload execution clusters (cluster1 and cluster2)",
+                    "Registers the WEC clusters with the hub",
+                    "Sets up the complete KubeStellar demo environment"
+                ],
+                "prerequisites": {
+                    "required": ["kubectl", "helm", "docker", "kflex", "clusteradm"],
+                    "platform_specific": f"{platform} (or k3d as alternative)"
+                },
+                "estimated_time": "15-20 minutes depending on internet speed and system performance",
+                "troubleshooting": {
+                    "timeout_errors": "The script may take time to download images. Be patient.",
+                    "permission_errors": "Ensure Docker is running and you have necessary permissions",
+                    "cleanup_needed": "If the script fails, run 'kind delete clusters --all' or 'k3d cluster delete --all' before retrying"
+                }
+            }
+            
+            if output_format == "summary":
+                return {
+                    "status": "success",
+                    "quick_install": instructions["instructions"]["method_1_one_liner"]["command"],
+                    "script_url": script_url
+                }
+            
+            return instructions
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": f"Failed to generate installation instructions: {str(e)}"
+            }
+    
     async def _automated_setup(self, platform: str, version: str, output_format: str) -> Dict[str, Any]:
         """Run the automated KubeStellar setup script."""
         try:
@@ -755,9 +831,23 @@ class KubeStellarSetupFunction(BaseFunction):
                     "error": f"Failed to download setup script: {download_result['stderr']}",
                 }
 
-            # Run the script
-            run_cmd = ["bash", "-c", f"bash <(echo '{download_result['stdout']}') --platform {platform}"]
-            script_result = await self._run_command(run_cmd, timeout=1800)  # 30 minute timeout
+            # Save script to a temporary file to avoid quote escaping issues
+            import tempfile
+            import os
+            
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as tmp_file:
+                tmp_file.write(download_result['stdout'])
+                tmp_file_path = tmp_file.name
+            
+            try:
+                # Make the script executable and run it
+                os.chmod(tmp_file_path, 0o755)
+                run_cmd = ["bash", tmp_file_path, "--platform", platform]
+                script_result = await self._run_command(run_cmd, timeout=1800)  # 30 minute timeout
+            finally:
+                # Clean up the temporary file
+                if os.path.exists(tmp_file_path):
+                    os.remove(tmp_file_path)
 
             if script_result["returncode"] == 0:
                 return {
@@ -930,7 +1020,8 @@ class KubeStellarSetupFunction(BaseFunction):
                         "verify_prerequisites",
                         "cleanup",
                         "create_kubeflex",
-                        "setup_wec_clusters"
+                        "setup_wec_clusters",
+                        "show_install_instructions"
                     ],
                     "default": "full_setup",
                 },
