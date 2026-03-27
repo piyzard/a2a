@@ -18,7 +18,7 @@ A powerful, unified implementation of both MCP (Model Context Protocol) server a
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
 
-## Overview
+## Overviewcxxc
 
 KubeStellar is a comprehensive tool designed to simplify Kubernetes multi-cluster management through a dual-interface approach:
 
